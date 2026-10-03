@@ -194,3 +194,25 @@ backup locations and archives, but is not a secret scanner. `assets/` contains o
 unaltered public upstream CSS/Steamcord release ZIPs for tests; their upstream licenses
 remain applicable. Runtime installation downloads and checksums pinned URLs, not these
 fixture files.
+
+## Decky frontend diagnostics
+
+If the loader service is running but the Decky tab is missing, stay in Gaming Mode
+and run these commands over SSH (or from a terminal):
+
+```bash
+./decky-diagnostics.sh
+# If journal access is denied or incomplete:
+./decky-diagnostics.sh --sudo --minutes 10
+```
+
+This read-only script collects service status, up to 200 recent journal lines,
+Steam CEF tab titles, the Decky HTTP endpoint status, and the last 80 matching
+browser errors from the final 4 MiB of `cef_log.txt`. It changes no settings and
+restarts no services. `--minutes` accepts 1–1440 (default 10); `--sudo` applies only
+to journal collection. Keep `decky_diagnostics.py` alongside the wrapper.
+
+Authentication/plugin-event payloads are filtered, and browser tab URLs are omitted.
+Filtering is best effort: review the output before sharing. A 404 from Decky's root
+HTTP route still establishes that a server responded; it does not prove frontend
+injection. Missing logs/endpoints are reported without stopping the remaining checks.
