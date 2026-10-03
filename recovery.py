@@ -174,6 +174,18 @@ class Installer:
         self.saved.mkdir(parents=True, mode=0o700, exist_ok=True)
         self.saved.chmod(0o700)
     def replace(self, src, dst):
+        # sudo inherits our private umask. Repair/create home ancestors before
+        # inspecting targets, including directories left by an interrupted run.
+        if not self.a.sandbox and dst.is_relative_to(self.a.home):
+            parents = list(reversed(dst.parent.relative_to(self.a.home).parents))
+            directories = [self.a.home / p for p in parents if p != Path('.')] + [dst.parent]
+            for directory in directories:
+                result = subprocess.run(['sudo', 'test', '-L', str(directory)])
+                if result.returncode == 0: raise ValueError('Refusing symlink ancestor: ' + str(directory))
+                if result.returncode != 1: raise ValueError('Cannot inspect target ancestor: ' + str(directory))
+                run('sudo', 'mkdir', '-p', directory)
+                run('sudo', 'chown', str(os.getuid()) + ':' + str(os.getgid()), directory)
+                run('sudo', 'chmod', 'u+rwx', directory)
         if any(p.is_symlink() for p in [dst, *dst.parents]): raise ValueError('Refusing symlink target or ancestor: ' + str(dst))
         if dst.exists():
             saved = self.saved / ('system' if dst.is_relative_to(self.a.root / 'etc') else 'home') / str(dst).lstrip('/')
@@ -185,9 +197,12 @@ class Installer:
             if src.is_dir(): shutil.copytree(src, dst)
             else: shutil.copy2(src, dst)
         else:
-            run('sudo', 'mkdir', '-p', dst.parent)
+            if dst.is_relative_to(self.a.root / 'etc'):
+                run('sudo', 'install', '-d', '-m', '0755', dst.parent)
+            else:
+                run('sudo', 'mkdir', '-p', dst.parent)
             run('sudo', 'cp', '-a', src, dst)
-            if dst.is_relative_to(self.a.root / 'etc') and dst.is_file(): run('sudo', 'chmod', '0644', dst)
+            if dst.is_relative_to(self.a.root / 'etc') and src.is_file(): run('sudo', 'chmod', '0644', dst)
             if dst.is_relative_to(self.a.home): run('sudo', 'chown', '-R', str(os.getuid()) + ':' + str(os.getgid()), dst)
     def archive(self, archive, c, config=False):
         with tempfile.TemporaryDirectory() as tmp:

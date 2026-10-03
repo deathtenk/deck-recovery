@@ -124,6 +124,19 @@ class RecoveryTests(unittest.TestCase):
         src = self.root / 'file'; src.write_text('data')
         with self.assertRaises(ValueError): r.Installer(a).replace(src, home / 'homebrew/file')
         self.assertFalse((outside / 'file').exists())
+    def test_live_home_ancestors_repaired_before_target_inspection(self):
+        dst = self.root / 'dst'; home = dst / 'home/deck'; home.mkdir(parents=True)
+        a = argparse.Namespace(home=home, root=dst, sandbox=None)
+        src = self.root / 'version'; src.write_text('v3.2.6')
+        target = home / 'homebrew/services/.loader.version'
+        calls = []
+        def record(*args): calls.append(tuple(str(x) for x in args))
+        with patch.object(r, 'run', record), patch.object(r.subprocess, 'run', return_value=argparse.Namespace(returncode=1)):
+            r.Installer(a).replace(src, target)
+        for parent in [home / 'homebrew', home / 'homebrew/services']:
+            self.assertIn(('sudo', 'chown', str(r.os.getuid()) + ':' + str(r.os.getgid()), str(parent)), calls)
+            self.assertIn(('sudo', 'chmod', 'u+rwx', str(parent)), calls)
+        self.assertLess(calls.index(('sudo', 'chmod', 'u+rwx', str(target.parent))), calls.index(('sudo', 'cp', '-a', str(src), str(target))))
     def test_checksum_mismatch(self):
         with patch('urllib.request.urlopen', return_value=io.BytesIO(b'bad')):
             with self.assertRaises(ValueError): r.fetch({'url':'https://example.org/file', 'sha256':'wrong'}, self.root / 'download')
