@@ -1,7 +1,8 @@
 {
   "decky": {
-    "url": "https://github.com/SteamDeckHomebrew/decky-loader/releases/download/v3.2.6/PluginLoader",
-    "sha256": "30f017a36a8baeb8c3dbae884f5d64be987a9b351b3859bf33e88615b653cf5e"
+    "url": "https://github.com/SteamDeckHomebrew/decky-loader/releases/download/v3.2.9/PluginLoader",
+    "sha256": "0a5246db98f2df93a6685ac8230e0acfbfa6e91d99b41b8dbbf1f94c308dedce",
+    "version": "v3.2.9"
   },
   "decktation": {
     "url": "https://github.com/deathtenk/decktation/releases/download/v0.3.11-exp14/decktation.zip",

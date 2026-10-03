@@ -50,12 +50,19 @@ def main():
     parser.add_argument('--minutes', type=int, default=10, help='Recent service journal window, default 10 minutes')
     args = parser.parse_args()
     if args.minutes < 1 or args.minutes > 1440: parser.error('--minutes must be between 1 and 1440')
+    if args.sudo:
+        try:
+            # Authenticate on the terminal before starting timed/captured checks.
+            subprocess.run(['sudo', '-v'], check=True)
+        except (OSError, subprocess.CalledProcessError):
+            print('sudo authentication failed; collecting unprivileged logs instead.')
+            args.sudo = False
     print('Decky diagnostics — read-only. Run while Steam is in Gaming Mode.')
     print('Output filtering is best effort; review before sharing.\n')
     print('=== Service status ===')
     command(['systemctl', 'status', 'plugin_loader', '--no-pager', '-l'])
     print('\n=== Recent service journal ===')
-    command((['sudo'] if args.sudo else []) + ['journalctl', '-u', 'plugin_loader', '-b', '--since', str(args.minutes) + ' minutes ago', '-n', '200', '--no-pager', '-o', 'cat'])
+    command((['sudo', '-n'] if args.sudo else []) + ['journalctl', '-u', 'plugin_loader', '-b', '--since', str(args.minutes) + ' minutes ago', '-n', '200', '--no-pager', '-o', 'cat'])
     print('\n=== Steam CEF endpoint ===')
     endpoint('http://127.0.0.1:8080/json', contexts=True)
     print('\n=== Decky web endpoint ===')

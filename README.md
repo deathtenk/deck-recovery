@@ -126,7 +126,7 @@ to this machine; edit the captured service and code check together to support an
 apply afterward; disable wins. Plugins require Decky, and Decky requires Homebrew.
 An empty exact selection (`--components ''`) selects nothing.
 
-Stateless downloads support the essentials: Decky 3.2.6, Decktation 0.3.11-exp14,
+Stateless downloads support the essentials: Decky 3.2.9, Decktation 0.3.11-exp14,
 CSS Loader 2.1.2, Steamcord 1.30.0, and a commit-pinned Homebrew bootstrap. SHA-256 values
 are in `installers.json`; there are no `latest` release URLs. Homebrew's bootstrap itself
 is pinned, but the Homebrew checkout it installs can evolve.
@@ -216,3 +216,19 @@ Authentication/plugin-event payloads are filtered, and browser tab URLs are omit
 Filtering is best effort: review the output before sharing. A 404 from Decky's root
 HTTP route still establishes that a server responded; it does not prove frontend
 injection. Missing logs/endpoints are reported without stopping the remaining checks.
+
+### Steam frontend compatibility
+
+Stateless Decky is now pinned to 3.2.9. Version 3.2.6 fails on Steam clients that
+renamed `BFinishedInitStageOne`, producing a TypeError before the UI connects.
+Upstream fixed that API compatibility in 3.2.8; 3.2.9 includes subsequent Steam
+frontend fixes. Captured recovery continues to restore the captured binary.
+To update only Decky while retaining installed plugins and settings:
+
+```bash
+./deck-recovery.sh restore --stateless --components decky
+```
+
+Reboot into Gaming Mode afterward. Hardware/UI compatibility still requires a live
+check on the target device. Diagnostics authenticates sudo before beginning its
+20-second journal collection timeout, so password entry is not timed out.

@@ -287,7 +287,7 @@ def restore(a, selected, payload, specs):
                     ins.replace(staged[c], a.home / 'homebrew/services/PluginLoader')
                     if a.sandbox: (a.home / 'homebrew/services/PluginLoader').chmod(0o755)
                     else: run('sudo', 'chmod', '0755', a.home / 'homebrew/services/PluginLoader')
-                    version = tmp / 'loader-version'; version.write_text('v3.2.6\n')
+                    version = tmp / 'loader-version'; version.write_text(specs['decky']['version'] + '\n')
                     ins.replace(version, a.home / 'homebrew/services/.loader.version')
                 if a.reset_config: ins.reset(c)
                 if 'config' in payload.get(c, {}): ins.archive(payload[c]['config'], c, True)
