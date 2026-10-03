@@ -1,0 +1,22 @@
+{
+  "decky": {
+    "url": "https://github.com/SteamDeckHomebrew/decky-loader/releases/download/v3.2.6/PluginLoader",
+    "sha256": "30f017a36a8baeb8c3dbae884f5d64be987a9b351b3859bf33e88615b653cf5e"
+  },
+  "decktation": {
+    "url": "https://github.com/deathtenk/decktation/releases/download/v0.3.11-exp14/decktation.zip",
+    "sha256": "fbaaf7f917572ebef87584239eeb478e5b03ab5a63caaa60b98bca30810dad37"
+  },
+  "css-loader": {
+    "url": "https://github.com/DeckThemes/SDH-CssLoader/releases/download/v2.1.2/SDH-CSSLoader-Decky.zip",
+    "sha256": "0105b29cba25eacbfb8574b8a72e24b82cd1a8fb1ea6a9b3460597c9583e79ed"
+  },
+  "steamcord": {
+    "url": "https://github.com/Necrosiak/Steamcord/releases/download/v1.30.0/Steamcord.zip",
+    "sha256": "7c7f2baf1f3f9072d74ba7a475a75b9fcd4f7dfa34e800f6bc2a2952fca7ac99"
+  },
+  "homebrew": {
+    "url": "https://raw.githubusercontent.com/Homebrew/install/35da6871c4be7d7fdab2fd505fb7fa667926a2a5/install.sh",
+    "sha256": "5f333bbe53bc490e51e7ccb1df8779b3dd6ee73a1a7379efda216edb08ccb148"
+  }
+}

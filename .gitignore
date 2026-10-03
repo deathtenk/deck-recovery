@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+backups/
+bundles/
+*.zip
+!assets/css-loader.zip
+!assets/steamcord.zip
