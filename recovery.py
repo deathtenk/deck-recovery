@@ -292,6 +292,7 @@ def restore(a, selected, payload, specs):
                 if a.reset_config: ins.reset(c)
                 if 'config' in payload.get(c, {}): ins.archive(payload[c]['config'], c, True)
                 if c == 'decky':
+                    enable_cef(a)
                     unit = tmp / 'plugin_loader.service'
                     unit.write_text('[Unit]\nDescription=SteamDeck Plugin Loader\nAfter=network.target\n[Service]\nType=simple\nUser=root\nRestart=always\nKillMode=process\nTimeoutStopSec=15\nExecStart=/home/deck/homebrew/services/PluginLoader\nWorkingDirectory=/home/deck/homebrew/services\nEnvironment=UNPRIVILEGED_PATH=/home/deck/homebrew\nEnvironment=PRIVILEGED_PATH=/home/deck/homebrew\n[Install]\nWantedBy=multi-user.target\n')
                     ins.replace(unit, a.root / 'etc/systemd/system/plugin_loader.service')
@@ -314,6 +315,18 @@ def restore(a, selected, payload, specs):
             if loader_stopped: run('sudo', 'systemctl', 'start', 'plugin_loader')
     print('Restoration completed. Reboot, then run verify and perform the README hardware checks.')
 
+def steam_root(a):
+    candidate = a.home / '.steam/steam'
+    root = candidate.resolve() if candidate.exists() else a.home / '.local/share/Steam'
+    if not root.resolve().is_relative_to(a.home.resolve()):
+        raise ValueError('Steam directory resolves outside the target home')
+    return root
+
+def enable_cef(a):
+    root = steam_root(a)
+    root.mkdir(parents=True, exist_ok=True)
+    (root / '.cef-enable-remote-debugging').touch()
+
 def verify(a, selected):
     missing = []
     for c in selected:
@@ -328,6 +341,16 @@ def verify(a, selected):
         if not a.sandbox:
             for s in SERVICES.get(c, []): run('systemctl', 'is-enabled', '--quiet', s)
     if missing: raise ValueError('Missing installation files:\n' + '\n'.join(missing))
+    if 'decky' in selected and not (steam_root(a) / '.cef-enable-remote-debugging').is_file():
+        raise ValueError('Steam CEF debugging marker missing; rerun restore and reboot')
+    if not a.sandbox and 'decky' in selected:
+        try:
+            with urllib.request.urlopen('http://127.0.0.1:8080/json', timeout=5) as response:
+                tabs = json.load(response)
+            if not isinstance(tabs, list) or not tabs:
+                raise ValueError('Steam debugging endpoint has no tabs')
+        except (OSError, ValueError, urllib.error.URLError) as e:
+            raise ValueError('Steam CEF endpoint unavailable. Reboot into Gaming Mode after restore, then verify again.') from e
     if not a.sandbox:
         for c, service in [('decky', 'plugin_loader'), ('lg-tv', 'lg-tv-control-steam-button')]:
             if c in selected: run('systemctl', 'is-active', '--quiet', service)

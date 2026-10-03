@@ -137,6 +137,22 @@ class RecoveryTests(unittest.TestCase):
             self.assertIn(('sudo', 'chown', str(r.os.getuid()) + ':' + str(r.os.getgid()), str(parent)), calls)
             self.assertIn(('sudo', 'chmod', 'u+rwx', str(parent)), calls)
         self.assertLess(calls.index(('sudo', 'chmod', 'u+rwx', str(target.parent))), calls.index(('sudo', 'cp', '-a', str(src), str(target))))
+    def test_cef_marker_created_for_fresh_and_symlinked_steam(self):
+        root = self.root / 'target'; home = root / 'home/deck'
+        a = argparse.Namespace(home=home, root=root, sandbox=root)
+        r.enable_cef(a)
+        marker = home / '.local/share/Steam/.cef-enable-remote-debugging'
+        self.assertTrue(marker.is_file())
+        (home / '.steam').mkdir()
+        (home / '.steam/steam').symlink_to(home / '.local/share/Steam', target_is_directory=True)
+        r.enable_cef(a)
+        self.assertTrue(marker.is_file())
+    def test_cef_refuses_external_steam_target(self):
+        home = self.root / 'home'; (home / '.steam').mkdir(parents=True)
+        outside = self.root / 'outside'; outside.mkdir()
+        (home / '.steam/steam').symlink_to(outside, target_is_directory=True)
+        a = argparse.Namespace(home=home, root=self.root, sandbox=self.root)
+        with self.assertRaises(ValueError): r.enable_cef(a)
     def test_checksum_mismatch(self):
         with patch('urllib.request.urlopen', return_value=io.BytesIO(b'bad')):
             with self.assertRaises(ValueError): r.fetch({'url':'https://example.org/file', 'sha256':'wrong'}, self.root / 'download')
