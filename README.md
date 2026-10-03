@@ -79,7 +79,7 @@ partitions or formats disks.
 
 | Name | Default | Contents |
 | --- | --- | --- |
-| `homebrew` | On | Homebrew installation; no formula/cask inventory replay |
+| `homebrew` | On | Homebrew installation and idempotent Bash shell setup; no formula/cask inventory replay |
 | `decky` | On | Loader binary, service, loader preferences |
 | `decktation` | On | Plugin and its settings/data |
 | `css-loader` | On | Plugin, settings/data, CSS themes |
@@ -177,7 +177,7 @@ Automated tests cover selection/dependencies, capture/restore/reruns, corrupt ha
 ZIP traversal/symlinks, stateless backup isolation, selected resets, and unsupported
 installer failure. Fixture tests use checked upstream CSS/Steamcord ZIPs under `assets/`.
 Real essentials and optional-component captures (excluding privileged LG configuration) were also restored and verified in isolated filesystems. LG file restoration is covered with fixtures. A full LG capture still needs an interactive sudo session.
-A stateless CSS Loader + Steamcord rehearsal also downloaded the actual pinned Decky and plugin releases, checked their hashes, installed them in an isolated filesystem, and passed verification. All 16 automated tests pass. Decky installation also creates Steam’s `.cef-enable-remote-debugging` marker; reboot into Gaming Mode before verification. Live verification checks that the local CEF debugging endpoint responds with tabs. A regression test also checks that live home directory ownership/access is repaired before inspecting files, including directories left by an interrupted fresh installation. Sandbox Homebrew is only a marker and does not prove the live installer works.
+A stateless CSS Loader + Steamcord rehearsal also downloaded the actual pinned Decky and plugin releases, checked their hashes, installed them in an isolated filesystem, and passed verification. All 21 automated tests pass. Decky installation also creates Steam’s `.cef-enable-remote-debugging` marker; reboot into Gaming Mode before verification. Live verification checks that the local CEF debugging endpoint responds with tabs. A regression test also checks that live home directory ownership/access is repaired before inspecting files, including directories left by an interrupted fresh installation. Sandbox Homebrew is only a marker and does not prove the live installer works.
 
 Live destructive recovery has not been rehearsed on a spare disk. After a real restore,
 check Decky in Gaming Mode; open each selected plugin; check CSS themes; log in to
@@ -232,3 +232,16 @@ To update only Decky while retaining installed plugins and settings:
 Reboot into Gaming Mode afterward. Hardware/UI compatibility still requires a live
 check on the target device. Diagnostics authenticates sudo before beginning its
 20-second journal collection timeout, so password entry is not timed out.
+
+### Homebrew in Bash
+
+The Homebrew stage adds its `brew shellenv bash` initialization to `~/.bashrc`,
+including when Homebrew was already installed. Existing content is preserved and
+backed up before editing; an identical initialization line is not duplicated.
+Open a new terminal afterward, or activate it immediately in the current shell:
+
+```bash
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+```
+
+To repair only Homebrew setup: `./deck-recovery.sh restore --stateless --components homebrew`.

@@ -153,6 +153,24 @@ class RecoveryTests(unittest.TestCase):
         (home / '.steam/steam').symlink_to(outside, target_is_directory=True)
         a = argparse.Namespace(home=home, root=self.root, sandbox=self.root)
         with self.assertRaises(ValueError): r.enable_cef(a)
+    def test_homebrew_bashrc_preserves_content_and_is_idempotent(self):
+        home = self.root / 'home'; home.mkdir()
+        bashrc = home / '.bashrc'; bashrc.write_text('export CUSTOM=value')
+        a = argparse.Namespace(home=home)
+        r.configure_brew_shell(a)
+        r.configure_brew_shell(a)
+        content = bashrc.read_text()
+        self.assertIn('export CUSTOM=value\n', content)
+        self.assertEqual(content.count('brew shellenv bash'), 1)
+        backups = list((home / '.local/state/deck-recovery').glob('*-bashrc'))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_text(), 'export CUSTOM=value')
+    def test_homebrew_existing_shell_setup_not_duplicated(self):
+        home = self.root / 'home'; home.mkdir()
+        content = 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"\n'
+        (home / '.bashrc').write_text(content)
+        r.configure_brew_shell(argparse.Namespace(home=home))
+        self.assertEqual((home / '.bashrc').read_text(), content)
     def test_checksum_mismatch(self):
         with patch('urllib.request.urlopen', return_value=io.BytesIO(b'bad')):
             with self.assertRaises(ValueError): r.fetch({'url':'https://example.org/file', 'sha256':'wrong'}, self.root / 'download')

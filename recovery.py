@@ -276,6 +276,7 @@ def restore(a, selected, payload, specs):
                     elif not Path('/home/linuxbrew/.linuxbrew/bin/brew').exists():
                         script = tmp / 'brew.sh'; fetch(specs['homebrew'], script)
                         subprocess.run(['/bin/bash', str(script)], check=True, env={**os.environ, 'NONINTERACTIVE': '1'})
+                    configure_brew_shell(a)
                     continue
                 if 'software' in payload.get(c, {}): ins.archive(staged[c], c)
                 elif c in PLUGINS:
@@ -314,6 +315,24 @@ def restore(a, selected, payload, specs):
         finally:
             if loader_stopped: run('sudo', 'systemctl', 'start', 'plugin_loader')
     print('Restoration completed. Reboot, then run verify and perform the README hardware checks.')
+
+def configure_brew_shell(a):
+    """Make Homebrew available to future interactive Bash sessions."""
+    bashrc = a.home / '.bashrc'
+    if bashrc.is_symlink():
+        raise ValueError('Refusing to edit symlinked .bashrc')
+    line = 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"'
+    original = bashrc.read_text() if bashrc.exists() else ''
+    if any(line == existing.strip() for existing in original.splitlines()):
+        return
+    if bashrc.exists():
+        saved = a.home / '.local/state/deck-recovery' / (str(time.time_ns()) + '-bashrc')
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(bashrc, saved)
+        saved.chmod(0o600)
+    bashrc.parent.mkdir(parents=True, exist_ok=True)
+    with bashrc.open('a') as f:
+        f.write(('\n' if original and not original.endswith('\n') else '') + '\n# Homebrew shell environment (deck-recovery)\n' + line + '\n')
 
 def steam_root(a):
     candidate = a.home / '.steam/steam'
